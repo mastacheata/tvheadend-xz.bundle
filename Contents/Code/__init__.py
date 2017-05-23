@@ -61,10 +61,10 @@ def ValidatePrefs():
         Log.Error("Please specify your TVheadend password in the settings")
         return False
 
-    addr = ('bene-ds713.ymoq.de', 9982)
-    tvh = htsp.HTSPClient(addr, 'TestClient')
+    addr = (Prefs["tvheadend-url"], int(Prefs["tvheadend-http-port"])+1)
+    tvh = htsp.HTSPClient(addr)
     tvh.hello()
-    tvh.authenticate('admin', 'hHNyjC3X')
+    tvh.authenticate(Prefs["tvheadend-login"], Prefs["tvheadend-password"])
     if 'noaccess' in error:
         Log.Error("Bad credentials used to log in at HTSP API of TVheadend")
         return False
