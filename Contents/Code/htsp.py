@@ -22,6 +22,7 @@ Much of the code is pretty rough, but might help people get started
 with communicating with HTSP server
 """
 
+import log
 import htsmsg
 
 # ###########################################################################
@@ -32,7 +33,7 @@ HTSP_PROTO_VERSION = 25
 
 
 # Create passwd digest
-def htsp_digest(passwd, chal):
+def htsp_digest(user, passwd, chal):
     import hashlib
     ret = hashlib.sha1(passwd + chal).digest()
     return ret
@@ -45,51 +46,59 @@ class HTSPClient(object):
         import socket
 
         # Setup
-        self._sock = socket.create_connection(addr)
-        self._name = name
-        self._auth = None
-        self._user = None
-        self._pass = None
-        self._version = None
+        self.psock = socket.create_connection(addr)
+        self.pname = name
+        self.pauth = None
+        self.puser = None
+        self.ppass = None
+        self.pversion = None
 
     # Send
     def send(self, func, args={}):
         args['method'] = func
-        if self._user: args['username'] = self._user
-        if self._pass: args['digest'] = htsmsg.HMFBin(self._pass)
-        self._sock.send(htsmsg.serialize(args))
+        if self.puser: args['username'] = self.puser
+        if self.ppass: args['digest'] = htsmsg.HMFBin(self.ppass)
+        log.debug('htsp tx:')
+        log.debug(args, pretty=True)
+        self.psock.send(htsmsg.serialize(args))
 
     # Receive
     def recv(self):
-        ret = htsmsg.deserialize(self._sock, False)
+        ret = htsmsg.deserialize(self.psock, False)
+        log.debug('htsp rx:')
+        log.debug(ret, pretty=True)
         return ret
 
     # Setup
     def hello(self):
         args = {
             'htspversion': HTSP_PROTO_VERSION,
-            'clientname': self._name
+            'clientname': self.pname
         }
         self.send('hello', args)
         resp = self.recv()
 
         # Store
-        self._version = min(HTSP_PROTO_VERSION, resp['htspversion'])
-        self._auth = resp['challenge']
+        self.pversion = min(HTSP_PROTO_VERSION, resp['htspversion'])
+        self.pauth = resp['challenge']
 
         # Return response
         return resp
 
     # Authenticate
     def authenticate(self, user, passwd=None):
-        self._user = user
+        self.puser = user
         if passwd:
-            self._pass = htsp_digest(passwd, self._auth)
+            self.ppass = htsp_digest(user, passwd, self.pauth)
         self.send('authenticate')
         resp = self.recv()
         if 'noaccess' in resp:
             raise Exception('Authentication failed')
 
+    # Enable async receive
+    def enableAsyncMetadata(self, args={}):
+        self.send('enableAsyncMetadata', args)
+
     def disconnect(self):
-        self._sock.close()
+        self.psock.close()
 

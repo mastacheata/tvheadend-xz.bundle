@@ -1,0 +1,3 @@
+[submodule "Contents/Tests/plex_test_case"]
+	path = Contents/Tests/plex_test_case
+	url = https://bitbucket.org/czukowski/plex-test-case.git

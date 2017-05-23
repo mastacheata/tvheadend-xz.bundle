@@ -1,7 +1,7 @@
-from tvheadend import htsp
+import htsp
 
 TITLE = "XZ"
-PREFIX = "/video/tvheadend-xz"
+PREFIX = "/video/xz"
 
 ART = 'art-default.jpg'
 ICON = 'tvheadend.png'
@@ -61,13 +61,11 @@ def ValidatePrefs():
         Log.Error("Please specify your TVheadend password in the settings")
         return False
 
-    tvh = htsp.HTSPClient(Prefs["tvheadend-url"], int(Prefs["tvheadend-http-port"])+1)
+    addr = ('bene-ds713.ymoq.de', 9982)
+    tvh = htsp.HTSPClient(addr, 'TestClient')
     tvh.hello()
-    # tvh = tvheadend.HTSPClient(Prefs["tvheadend-url"], int(Prefs["tvheadend-http-port"])+1)
-    # tvh.hello()
-    # tvh.authenticate(Prefs["tvheadend-login"], Prefs["tvheadend-password"])
-    # error = tvh.recv()
-    # if 'noaccess' in error:
-    #     Log.Error("Bad credentials used to log in at HTSP API of TVheadend")
-    #     return False
+    tvh.authenticate('admin', 'hHNyjC3X')
+    if 'noaccess' in error:
+        Log.Error("Bad credentials used to log in at HTSP API of TVheadend")
+        return False
     return True

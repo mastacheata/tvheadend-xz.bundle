@@ -94,7 +94,7 @@ def hmf_type(f):
 
 
 # Size for field
-def _binary_count(f):
+def pbinary_count(f):
     ret = 0
     if type(f) in [str, HMFBin]:
         ret = ret + len(f)
@@ -118,7 +118,7 @@ def binary_count(msg):
         if not lst:
             ret = ret + len(f)
             f = msg[f]
-        ret = ret + _binary_count(f)
+        ret = ret + pbinary_count(f)
     return ret
 
 
@@ -133,7 +133,7 @@ def binary_write(msg):
             f = msg[f]
         ret = ret + chr(hmf_type(f))
         ret = ret + chr(len(na) & 0xFF)
-        l = _binary_count(f)
+        l = pbinary_count(f)
         ret = ret + int2bin(l)
         ret = ret + na
 
@@ -203,45 +203,43 @@ def deserialize0(data, typ=HMF_MAP):
 
 # Deserialize a series of message
 def deserialize(fp, rec=False):
-    class _Deserialize:
+    class pDeserialize:
         def __init__(self, fp, rec=False):
-            self._fp = fp
-            self._rec = rec
+            self.pfp = fp
+            self.prec = rec
 
-        def __iter__(self):
-            print '__iter__()'
-            return self
-
-        def _read(self, num):
+        def pread(self, num):
             r = None
-            if hasattr(self._fp, 'read'):
-                r = self._fp.read(num)
-            elif hasattr(self._fp, 'recv'):
-                r = self._fp.recv(num)
-            elif type(self._fp) is list:
-                r = self._fp[:num]
-                self._fp = self._fp[num:]
+            if hasattr(self.pfp, 'read'):
+                r = self.pfp.read(num)
+            elif hasattr(self.pfp, 'recv'):
+                r = self.pfp.recv(num)
+            elif type(self.pfp) is list:
+                r = self.pfp[:num]
+                self.pfp = self.pfp[num:]
             else:
                 raise Exception('invalid data type')
             return r
 
         def next(self):
-            if not self._fp: raise StopIteration()
-            tmp = self._read(4)
+            if not self.pfp:
+                raise StopIteration()
+            tmp = self.pread(4)
             if len(tmp) != 4:
-                self._fp = None
+                self.pfp = None
                 raise StopIteration()
             num = bin2int(tmp)
             data = ''
             while len(data) < num:
-                tmp = self._read(num - len(data))
+                tmp = self.pread(num - len(data))
                 if not tmp:
                     raise Exception('failed to read from fp')
                 data = data + tmp
-            if not self._rec: self._fp = None
+            if not self.prec:
+                self.pfp = None
             return deserialize0(data)
 
-    ret = _Deserialize(fp, rec)
+    ret = pDeserialize(fp, rec)
     if not rec:
         ret = ret.next()
     return ret
