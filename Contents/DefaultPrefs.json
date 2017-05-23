@@ -1,0 +1,28 @@
+[
+  {
+    "id": "tvheadend-url",
+    "type": "text",
+    "label": "URL to TVheadend (localhost is a sensible default if both TVheadend and Plex run on the same machine, otherwise enter the IP address of your tvheadend server here)",
+    "default": "localhost"
+  },
+  {
+    "id": "tvheadend-http-port",
+    "label": "Port to the HTTP/Web Interface of TVheadend (i.e. the number after the : in the URL, Default: 9981)",
+    "type": "text",
+    "default": "9981"
+  },
+  {
+    "id": "tvheadend-login",
+    "type": "text",
+    "label": "TVheadend username/login",
+    "default": "admin"
+  },
+  {
+    "id": "tvheadend-password",
+    "type": "text",
+    "label": "TVheadend password",
+    "default": "",
+    "option": "hidden",
+    "secure": "true"
+  }
+]
