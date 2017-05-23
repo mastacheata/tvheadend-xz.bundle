@@ -33,7 +33,7 @@ HTSP_PROTO_VERSION = 25
 
 
 # Create passwd digest
-def htsp_digest(user, passwd, chal):
+def htsp_digest(passwd, chal):
     import hashlib
     ret = hashlib.sha1(passwd + chal).digest()
     return ret
@@ -46,25 +46,25 @@ class HTSPClient(object):
         import socket
 
         # Setup
-        self.psock = socket.create_connection(addr)
-        self.pname = name
-        self.pauth = None
-        self.puser = None
-        self.ppass = None
-        self.pversion = None
+        self.p_sock = socket.create_connection(addr)
+        self.p_name = name
+        self.p_auth = None
+        self.p_user = None
+        self.p_pass = None
+        self.p_version = None
 
     # Send
     def send(self, func, args={}):
         args['method'] = func
-        if self.puser: args['username'] = self.puser
-        if self.ppass: args['digest'] = htsmsg.HMFBin(self.ppass)
+        if self.p_user: args['username'] = self.p_user
+        if self.p_pass: args['digest'] = htsmsg.HMFBin(self.p_pass)
         log.debug('htsp tx:')
         log.debug(args, pretty=True)
-        self.psock.send(htsmsg.serialize(args))
+        self.p_sock.send(htsmsg.serialize(args))
 
     # Receive
     def recv(self):
-        ret = htsmsg.deserialize(self.psock, False)
+        ret = htsmsg.deserialize(self.p_sock, False)
         log.debug('htsp rx:')
         log.debug(ret, pretty=True)
         return ret
@@ -73,32 +73,28 @@ class HTSPClient(object):
     def hello(self):
         args = {
             'htspversion': HTSP_PROTO_VERSION,
-            'clientname': self.pname
+            'clientname': self.p_name
         }
         self.send('hello', args)
         resp = self.recv()
 
         # Store
-        self.pversion = min(HTSP_PROTO_VERSION, resp['htspversion'])
-        self.pauth = resp['challenge']
+        self.p_version = min(HTSP_PROTO_VERSION, resp['htspversion'])
+        self.p_auth = resp['challenge']
 
         # Return response
         return resp
 
     # Authenticate
     def authenticate(self, user, passwd=None):
-        self.puser = user
+        self.p_user = user
         if passwd:
-            self.ppass = htsp_digest(user, passwd, self.pauth)
+            self.p_pass = htsp_digest(passwd, self.p_auth)
         self.send('authenticate')
         resp = self.recv()
         if 'noaccess' in resp:
             raise Exception('Authentication failed')
 
-    # Enable async receive
-    def enableAsyncMetadata(self, args={}):
-        self.send('enableAsyncMetadata', args)
-
     def disconnect(self):
-        self.psock.close()
+        self.p_sock.close()
 
